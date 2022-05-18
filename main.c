@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <libguile.h>
+#include <ncurses.h>
 
 void* register_functions(void* data) {
     return NULL;
@@ -8,6 +9,20 @@ void* register_functions(void* data) {
 int main(int argc, char **argv) {
     printf("Hello, World!\n");
     scm_with_guile(register_functions, NULL);
-    scm_shell(argc, argv);
+
+    WINDOW* window = initscr();
+    cbreak();
+    noecho();
+    intrflush(window, FALSE);
+    keypad(window, true);
+
+    while(true) {
+        int ch = getch();
+        if (ch == 'q') {
+            break;
+        }
+    }
+
+    endwin();
     return 0;
 }
