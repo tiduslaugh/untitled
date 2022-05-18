@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <libguile.h>
-#include <ncurses.h>
+#include <curses.h>
 
 void* register_functions(void* data) {
     return NULL;
