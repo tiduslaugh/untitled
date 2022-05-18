@@ -18,6 +18,6 @@ if(NOT GUILE_INCLUDE)
     message(FATAL_ERROR "guile_include not set")
 endif()
 
-add_executable(untitled main.c)
+add_executable(untitled src/main.c)
 target_link_libraries(untitled "${GUILE_LIB}" "${CURSES_LIBRARIES}")
 target_include_directories(untitled PUBLIC "${GUILE_INCLUDE}" "${CURSES_INCLUDE_DIRS}")
