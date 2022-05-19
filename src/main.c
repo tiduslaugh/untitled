@@ -40,27 +40,23 @@ error_t find_root_dir(char** out_buf) {
     }
 }
 
-void * load_config_internal(void* raw_path) {
-    const char *path = (const char*)raw_path;
-    SCM s = scm_c_primitive_load(path);
-    char *representation = scm_to_locale_string(scm_object_to_string(s, SCM_UNDEFINED));
-    printf("scheme object is %s\n", representation);
-    free(representation);
-}
-
-error_t load_config() {
+void* load_config(void * arg) {
     char *root_dir;
     error_t err = find_root_dir(&root_dir);
     if (err) {
-        return err;
+        return NULL;
     }
     char *file_path = calloc(strlen(root_dir)+sizeof("/config.scm"), sizeof(char)); // sizeof string includes \0
     strcpy(file_path, root_dir);
     strcat(file_path, "/config.scm");
 
-    scm_with_guile(load_config_internal, file_path);
-
-    return 0;
+    SCM s = scm_c_primitive_load(file_path);
+    char *representation = scm_to_locale_string(scm_object_to_string(s, SCM_UNDEFINED));
+    printf("scheme object is %s\n", representation);
+    free(representation);
+    free(file_path);
+    free(root_dir);
+    return NULL;
 }
 
 void *register_functions(void *data) {
@@ -80,11 +76,7 @@ void init_curses() {
 
 int main(int argc, char **argv) {
     printf("Hello, World!\n");
-    error_t retval = load_config();
-    if(!retval) {
-        printf("Config loading failed with code %d\n", retval);
-        return retval;
-    }
+    scm_with_guile(load_config, NULL);
     scm_with_guile(register_functions, NULL);
 
     while (true) {
