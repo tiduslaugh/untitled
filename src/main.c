@@ -9,14 +9,14 @@
 
 typedef int error_t;
 
-error_t find_root_dir(char** out_buf) {
+error_t find_root_dir(char **out_buf) {
     char buf[1024];
     char filebuf[1200]; // some extra to add to the path
     struct stat stats;
     error_t return_value;
 
-    while(1) {
-        char* cwd = getcwd(buf, 1024);
+    while (1) {
+        char *cwd = getcwd(buf, 1024);
         if (cwd == NULL) {
             return_value = errno;
             return return_value;
@@ -30,7 +30,7 @@ error_t find_root_dir(char** out_buf) {
         strncpy(filebuf, cwd, sizeof(filebuf));
         strncat(filebuf, "/config.scm", sizeof(filebuf) - strlen(filebuf) - 1);
         int status = stat(filebuf, &stats);
-        if(status == 0) {
+        if (status == 0) {
             // file exists, off we go
             printf("Directory found: %s\n", cwd);
             *out_buf = strdup(cwd);
@@ -40,13 +40,13 @@ error_t find_root_dir(char** out_buf) {
     }
 }
 
-void* load_config(void * arg) {
+void *load_config(void *arg) {
     char *root_dir;
     error_t err = find_root_dir(&root_dir);
     if (err) {
         return NULL;
     }
-    char *file_path = calloc(strlen(root_dir)+sizeof("/config.scm"), sizeof(char)); // sizeof string includes \0
+    char *file_path = calloc(strlen(root_dir) + sizeof("/config.scm"), sizeof(char)); // sizeof string includes \0
     strcpy(file_path, root_dir);
     strcat(file_path, "/config.scm");
 
