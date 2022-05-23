@@ -7,7 +7,26 @@
 #include <string.h>
 #include <sys/stat.h>
 
-typedef int error_t;
+//typedef int error_t;
+typedef struct {
+  int code;
+  const char *file;
+  int line;
+} error_t;
+
+error_t make_error_(int code, const char *file, int line) {
+    error_t ret = {code, file, line};
+    return ret;
+}
+#define make_error(code) make_error_(code, __FILE__, __LINE__)
+
+const error_t SUCCESS = {0, NULL, -1};
+
+inline bool is_success(error_t err) {
+    return err.code == 0;
+}
+// Error trap macro.
+#define ERRT(x) { error_t err = (x); if (!is_success(err)) { return err; } }
 
 error_t find_root_dir(char **out_buf) {
     char buf[1024];
@@ -18,14 +37,12 @@ error_t find_root_dir(char **out_buf) {
     while (1) {
         char *cwd = getcwd(buf, 1024);
         if (cwd == NULL) {
-            return_value = errno;
-            return return_value;
+            return make_error(errno);
         }
         printf("Checking path %s...\n", cwd);
         if (strcmp(cwd, "/") == 0) {
             // we've reached the root, better stop searching
-            return_value = errno;
-            return ENOENT;
+            return make_error(ENOENT);
         }
         strncpy(filebuf, cwd, sizeof(filebuf));
         strncat(filebuf, "/config.scm", sizeof(filebuf) - strlen(filebuf) - 1);
@@ -34,18 +51,15 @@ error_t find_root_dir(char **out_buf) {
             // file exists, off we go
             printf("Directory found: %s\n", cwd);
             *out_buf = strdup(cwd);
-            return 0;
+            return SUCCESS;
         }
         chdir("..");
     }
 }
 
-void *load_config(void *arg) {
+error_t load_config() {
     char *root_dir;
-    error_t err = find_root_dir(&root_dir);
-    if (err) {
-        return NULL;
-    }
+    ERRT(find_root_dir(&root_dir));
     char *file_path = calloc(strlen(root_dir) + sizeof("/config.scm"), sizeof(char)); // sizeof string includes \0
     strcpy(file_path, root_dir);
     strcat(file_path, "/config.scm");
@@ -56,28 +70,27 @@ void *load_config(void *arg) {
     free(representation);
     free(file_path);
     free(root_dir);
-    return NULL;
+    return SUCCESS;
 }
 
-void *register_functions(void *data) {
+void register_functions() {
     SCM result = scm_c_eval_string("(+ 2 2)");
     assert(scm_is_integer(result));
     printf("%d\n", scm_to_int(result));
-    return NULL;
 }
 
 void init_curses() {
-    WINDOW *window = initscr();
+    initscr();
     cbreak();
-    noecho();
-    intrflush(window, FALSE);
-    keypad(window, true);
+    echo();
+    intrflush(stdscr, false);
+    keypad(stdscr, true);
 }
 
-int main(int argc, char **argv) {
-    printf("Hello, World!\n");
-    scm_with_guile(load_config, NULL);
-    scm_with_guile(register_functions, NULL);
+void guile_main(void *unused, int argc, char **argv) {
+    load_config();
+    register_functions();
+    init_curses();
 
     while (true) {
         int ch = getch();
@@ -87,5 +100,9 @@ int main(int argc, char **argv) {
     }
 
     endwin();
+}
+
+int main(int argc, char **argv) {
+    scm_boot_guile(argc, argv, guile_main, NULL);
     return 0;
 }
