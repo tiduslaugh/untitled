@@ -7,32 +7,12 @@
 #include <string.h>
 #include <sys/stat.h>
 
-//typedef int error_t;
-typedef struct {
-  int code;
-  const char *file;
-  int line;
-} error_t;
-
-error_t make_error_(int code, const char *file, int line) {
-    error_t ret = {code, file, line};
-    return ret;
-}
-#define make_error(code) make_error_(code, __FILE__, __LINE__)
-
-const error_t SUCCESS = {0, NULL, -1};
-
-inline bool is_success(error_t err) {
-    return err.code == 0;
-}
-// Error trap macro.
-#define ERRT(x) { error_t err = (x); if (!is_success(err)) { return err; } }
+#include "error_handling.h"
 
 error_t find_root_dir(char **out_buf) {
     char buf[1024];
     char filebuf[1200]; // some extra to add to the path
     struct stat stats;
-    error_t return_value;
 
     while (1) {
         char *cwd = getcwd(buf, 1024);
