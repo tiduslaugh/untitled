@@ -1,62 +1,27 @@
 #include <stdio.h>
 #include <libguile.h>
 #include <curses.h>
-#include <assert.h>
-#include <unistd.h>
-#include <errno.h>
 #include <string.h>
-#include <sys/stat.h>
+#include <errno.h>
 
 #include "error_handling.h"
+#include "config.h"
+#include "log.h"
 
-error_t find_root_dir(char **out_buf) {
-    char buf[1024];
-    char filebuf[1200]; // some extra to add to the path
-    struct stat stats;
-
-    while (1) {
-        char *cwd = getcwd(buf, 1024);
-        if (cwd == NULL) {
-            return make_error(errno);
-        }
-        printf("Checking path %s...\n", cwd);
-        if (strcmp(cwd, "/") == 0) {
-            // we've reached the root, better stop searching
-            return make_error(ENOENT);
-        }
-        strncpy(filebuf, cwd, sizeof(filebuf));
-        strncat(filebuf, "/config.scm", sizeof(filebuf) - strlen(filebuf) - 1);
-        int status = stat(filebuf, &stats);
-        if (status == 0) {
-            // file exists, off we go
-            printf("Directory found: %s\n", cwd);
-            *out_buf = strdup(cwd);
-            return SUCCESS;
-        }
-        chdir("..");
-    }
+void guile_debug_value(SCM val) {
+    char *representation = scm_to_locale_string(scm_object_to_string(val, SCM_UNDEFINED));
+    log_debug("scheme object is %s\n", representation);
+    free(representation);
 }
 
-error_t load_config() {
-    char *root_dir;
-    ERRT(find_root_dir(&root_dir));
-    char *file_path = calloc(strlen(root_dir) + sizeof("/config.scm"), sizeof(char)); // sizeof string includes \0
-    strcpy(file_path, root_dir);
-    strcat(file_path, "/config.scm");
-
-    SCM s = scm_c_primitive_load(file_path);
-    char *representation = scm_to_locale_string(scm_object_to_string(s, SCM_UNDEFINED));
-    printf("scheme object is %s\n", representation);
-    free(representation);
-    free(file_path);
-    free(root_dir);
-    return SUCCESS;
+void wrapup() {
+    // do all closing up shop in here
+    endwin();
 }
 
 void register_functions() {
-    SCM result = scm_c_eval_string("(+ 2 2)");
-    assert(scm_is_integer(result));
-    printf("%d\n", scm_to_int(result));
+    SCM result = get_config_value("launch-debug-server");
+    guile_debug_value(result);
 }
 
 void init_curses() {
@@ -67,8 +32,26 @@ void init_curses() {
     keypad(stdscr, true);
 }
 
+void setup_logging() {
+    SCM log_path = get_config_value_and_eval("log-path");
+    FILE *logfile;
+    if (scm_is_true(log_path)) {
+        char *str = scm_to_locale_string(log_path);
+        log_debug("Log file is %s", str);
+        logfile = fopen(str, "w+");
+        free(str);
+        if (!logfile) {
+            log_error("Error opening file: %s", strerror(errno));
+            return;
+        }
+        log_add_fp(logfile, LOG_DEBUG);
+    }
+}
+
 void guile_main(void *unused, int argc, char **argv) {
+    guile_debug_value(scm_current_module());
     load_config();
+    setup_logging();
     register_functions();
     init_curses();
 
@@ -79,10 +62,10 @@ void guile_main(void *unused, int argc, char **argv) {
         }
     }
 
-    endwin();
+    wrapup();
 }
 
 int main(int argc, char **argv) {
     scm_boot_guile(argc, argv, guile_main, NULL);
-    return 0;
+    //this never returns
 }

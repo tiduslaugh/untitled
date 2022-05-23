@@ -4,6 +4,8 @@
 
 #ifndef UNTITLED_SRC_ERROR_HANDLING_H_
 #define UNTITLED_SRC_ERROR_HANDLING_H_
+#include <stddef.h>
+#include <stdbool.h>
 
 typedef struct {
   int code;
@@ -11,13 +13,10 @@ typedef struct {
   int line;
 } error_t;
 
-error_t make_error_(int code, const char *file, int line) {
-    error_t ret = {code, file, line};
-    return ret;
-}
+error_t make_error_(int code, const char *file, int line);
 #define make_error(code) make_error_(code, __FILE__, __LINE__)
 
-const error_t SUCCESS = {0, NULL, -1};
+extern const error_t SUCCESS;
 
 // Error trap macro.
 #define ERRT(x) { error_t err = (x); if (err.code != 0) { return err; } }
