@@ -20,11 +20,19 @@ void wrapup() {
 }
 
 void register_functions() {
-    SCM result = get_config_value("launch-debug-server");
-    guile_debug_value(result);
+
+}
+
+void load_prelude() {
+    log_debug("Loading prelude...");
+    scm_c_use_module("lib prelude");
+    log_debug("Done.");
+    scm_eval(scm_list_1(scm_from_utf8_symbol("init-debug-server")),
+             scm_current_module());
 }
 
 void init_curses() {
+    log_set_quiet(true);
     initscr();
     cbreak();
     echo();
@@ -49,13 +57,14 @@ void setup_logging() {
 }
 
 void guile_main(void *unused, int argc, char **argv) {
-    guile_debug_value(scm_current_module());
     load_config();
     setup_logging();
     register_functions();
+    load_prelude();
     init_curses();
 
     while (true) {
+        //scm_eval(scm_list_1(scm_from_utf8_symbol("poll-repl-server")), scm_current_module());
         int ch = getch();
         if (ch == 'q') {
             break;
