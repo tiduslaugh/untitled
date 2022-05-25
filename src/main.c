@@ -22,7 +22,8 @@ void wrapup() {
 
 void load_prelude() {
     log_debug("Loading prelude...");
-    scm_c_use_module("lib prelude");
+    scm_c_primitive_load_path("lib/prelude.scm");
+    //scm_c_use_module("lib prelude");
     log_debug("Done.");
     scm_eval(scm_list_1(scm_from_utf8_symbol("init-debug-server")),
              scm_current_module());

@@ -1,20 +1,21 @@
 ;; Contains code that gets executed immediately after functions are registered but before
 ;; the display is initialized.
-(define-module (lib prelude)
-    #:use-module ((config) #:prefix config:)
-    #:use-module ((system repl server))
-    #:use-module ((system repl coop-server))
-)
+;;(define-module (lib prelude)
+;;    #:use-module ((config) #:prefix config:)
+;;    #:use-module ((system repl server))
+;;    #:use-module ((system repl coop-server))
+;;)
+(use-modules ((config) #:prefix config:)
+             ((system repl server))
+             ((system repl coop-server)))
+
 ;; Running top level repl server code in a module is no bueno, apparently...
-(define-public (init-debug-server)
+(define (init-debug-server)
     (if config:launch-debug-server
         (spawn-server (make-tcp-server-socket #:port config:debug-server-port))))
 
-(define-public (poll-repl-server)
-    (poll-coop-repl-server coop-server))
-
 ;; eg (interleave (list 1 2 3) "and") -> (list 1 "and" 2 "and" 3)
-(define-public (interleave lst sep)
+(define (interleave lst sep)
   (if (nil? lst)
     '()
     (letrec ((interleave-internal 
@@ -25,7 +26,7 @@
       (interleave-internal lst sep '()))))
 
 ;; eg (generate-prefix '(lib fancy-pants)) -> 'lib--fancy-pants:
-(define-public (generate-prefix module-list)
+(define (generate-prefix module-list)
     (string->symbol
       (string-append
         (string-concatenate (interleave (map symbol->string module-list) "--"))
@@ -46,5 +47,5 @@
                 (source-property (current-source-location) 'line)
                 (with-output-to-string 
                   (lambda () (simple-format (current-output-port) fmt arg ...)))))))
-(export clog)
+
 (clog 3 "Just a lil test...")
