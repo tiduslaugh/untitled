@@ -6,8 +6,30 @@
 #include <libguile.h>
 #include "log.h"
 
+static struct { const char *symbol; int value; } lookup[] = {
+    {"trace", LOG_TRACE},
+    {"debug", LOG_DEBUG},
+    {"info", LOG_INFO},
+    {"warn", LOG_WARN},
+    {"error", LOG_ERROR},
+    {"fatal", LOG_FATAL}
+};
+
+static int log_level_symbol_to_int(SCM symbol) {
+    for (int i = 0; i < (sizeof(lookup) / sizeof(lookup[0])); i++) {
+        if (scm_is_true(scm_eq_p(
+            scm_from_utf8_symbol(lookup[i].symbol),
+            symbol))) {
+            log_info("Found match %s", lookup[i].symbol);
+            return lookup[i].value;
+        }
+    }
+    return -1;
+}
+
 static SCM guile_log_level(SCM s_level, SCM s_file, SCM s_line, SCM s_formatted) {
-    int level = scm_to_int(s_level);
+    //int level = scm_to_int(s_level);
+    int level = log_level_symbol_to_int(s_level);
     char *format_str = scm_to_locale_string(s_formatted);
     const char *file = "nowhere";
     if (scm_is_true(s_file)) {

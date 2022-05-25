@@ -39,13 +39,13 @@
      (primitive-eval `(use-modules (,module-list #:prefix ,(generate-prefix module-list)))))))
 (export use-prefixed-module)
 
-(define-syntax clog
-  (syntax-rules ()
-    ((clog level fmt arg ...)
-     (let ((loc (current-source-location)))
-         (log-level level 
-                    (assq-ref loc 'filename) 
-                    (assq-ref loc 'line)
-                    (with-output-to-string 
-                      (lambda () (simple-format (current-output-port) fmt arg ...))))))))
-(clog 3 "Just a lil test...")
+;; Use our c based logging to log a message
+;; e.g. (clog 'error "We screwed up this bad: ~S" 5)
+(define-syntax-rule (clog level fmt arg ...)
+ (let ((loc (current-source-location)))
+     (log-level level 
+                (assq-ref loc 'filename) 
+                (assq-ref loc 'line)
+                (with-output-to-string 
+                  (lambda () (simple-format (current-output-port) fmt arg ...))))))
+(clog 'error "Just a lil test...~S" 5)
