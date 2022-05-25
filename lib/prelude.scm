@@ -42,10 +42,10 @@
 (define-syntax clog
   (syntax-rules ()
     ((clog level fmt arg ...)
-     (log-level level 
-                (current-filename) 
-                (source-property (current-source-location) 'line)
-                (with-output-to-string 
-                  (lambda () (simple-format (current-output-port) fmt arg ...)))))))
-
+     (let ((loc (current-source-location)))
+         (log-level level 
+                    (assq-ref loc 'filename) 
+                    (assq-ref loc 'line)
+                    (with-output-to-string 
+                      (lambda () (simple-format (current-output-port) fmt arg ...))))))))
 (clog 3 "Just a lil test...")
