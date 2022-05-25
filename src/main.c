@@ -7,6 +7,7 @@
 #include "error_handling.h"
 #include "config.h"
 #include "log.h"
+#include "primitives.h"
 
 void guile_debug_value(SCM val) {
     char *representation = scm_to_locale_string(scm_object_to_string(val, SCM_UNDEFINED));
@@ -17,10 +18,6 @@ void guile_debug_value(SCM val) {
 void wrapup() {
     // do all closing up shop in here
     endwin();
-}
-
-void register_functions() {
-
 }
 
 void load_prelude() {
@@ -64,7 +61,6 @@ void guile_main(void *unused, int argc, char **argv) {
     init_curses();
 
     while (true) {
-        //scm_eval(scm_list_1(scm_from_utf8_symbol("poll-repl-server")), scm_current_module());
         int ch = getch();
         if (ch == 'q') {
             break;
