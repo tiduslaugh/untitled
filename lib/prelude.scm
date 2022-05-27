@@ -5,10 +5,11 @@
 ;;    #:use-module ((system repl server))
 ;;    #:use-module ((system repl coop-server))
 ;;)
-(use-modules ((config) #:prefix config:)
+(use-modules ((config) #:prefix config:) ((ice-9 readline))
              ((system repl server))
              ((system repl coop-server)))
 
+(activate-readline)
 ;; Running top level repl server code in a module is no bueno, apparently...
 (define (init-debug-server)
     (if config:launch-debug-server
@@ -36,16 +37,25 @@
 (define-syntax use-prefixed-module
   (syntax-rules ()
     ((use-prefixed-module module-list)
-     (primitive-eval `(use-modules (,module-list #:prefix ,(generate-prefix module-list)))))))
+     (primitive-eval `(use-modules (,'module-list #:prefix ,(generate-prefix 'module-list)))))))
 (export use-prefixed-module)
+
+(define (symbol/string->string val)
+  (if (symbol? val)
+    (symbol->string val)
+    val))
 
 ;; Use our c based logging to log a message
 ;; e.g. (clog 'error "We screwed up this bad: ~S" 5)
 (define-syntax-rule (clog level fmt arg ...)
  (let ((loc (current-source-location)))
      (log-level level 
-                (assq-ref loc 'filename) 
-                (assq-ref loc 'line)
+                (assq-ref loc 'filename)
+                (symbol/string->string (assq-ref loc 'line))
                 (with-output-to-string 
                   (lambda () (simple-format (current-output-port) fmt arg ...))))))
 (clog 'error "Just a lil test...~S" 5)
+
+
+(display (current-error-port)) (newline)
+(raise-exception 'foo #:continuable? #t )
