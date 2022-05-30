@@ -31,11 +31,18 @@ void load_prelude() {
 
 void load_main() {
     log_debug("Loading main...");
-    scm_c_primitive_load_path("lib/main.scm");
+    //scm_c_primitive_load_path("lib/main.scm");
     log_debug("Done.");
-    log_debug("Starting main...");
-    scm_c_eval_string("(call-main-protected main-loop)");
-    log_debug("Finished main.");
+
+    while (1) {
+        int input = getch();
+        if (input == 'q') {
+            break;
+        }
+    }
+//    log_debug("Starting main...");
+//    scm_c_eval_string("(call-main-protected main-loop)");
+//    log_debug("Finished main.");
 }
 
 void init_curses() {

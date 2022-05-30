@@ -5,12 +5,12 @@
 ;;    #:use-module ((system repl server))
 ;;    #:use-module ((system repl coop-server))
 ;;)
-(use-modules ((config) #:prefix config:) ((ice-9 readline))
+(use-modules ((config) #:prefix config:) ;; ((ice-9 readline))
              ((system repl server))
              ((system repl coop-server))
              ((srfi srfi-18)))
 
-(activate-readline)
+;; (activate-readline)
 ;; Running top level repl server code in a module is no bueno, apparently...
 (define (init-debug-server)
     (if config:launch-debug-server
@@ -31,7 +31,7 @@
 (define (generate-prefix module-list)
     (string->symbol
       (string-append
-        (string-concatenate (interleave (map symbol->string module-list) "--"))
+        (string-join (map symbol->string module-list) "--")
         ":"
       )))
 
@@ -41,20 +41,12 @@
      (primitive-eval `(use-modules (,'module-list #:prefix ,(generate-prefix 'module-list)))))))
 (export use-prefixed-module)
 
-(define (symbol/string->string val)
-  (if (symbol? val)
-    (symbol->string val)
-    val))
+(use-modules ((lib clog)))
+(module-add! 
+  (resolve-module '(lib clog))
+  'log-level 
+  (module-variable (current-module) 'log-level))
 
-;; Use our c based logging to log a message
-;; e.g. (clog 'error "We screwed up this bad: ~S" 5)
-(define-syntax-rule (clog level fmt arg ...)
- (let ((loc (current-source-location)))
-     (log-level level 
-                (assq-ref loc 'filename)
-                (symbol/string->string (assq-ref loc 'line))
-                (with-output-to-string 
-                  (lambda () (simple-format (current-output-port) fmt arg ...))))))
 (clog 'error "Just a lil test...~S" 5)
 
 (define (clog-exception-handler exc)

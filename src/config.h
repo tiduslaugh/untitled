@@ -7,8 +7,8 @@
 #include <libguile/scm.h>
 #include "error_handling.h"
 
-error_t find_root_dir(char **out_buf);
-error_t load_config();
+err_t find_root_dir(char **out_buf);
+err_t load_config();
 
 SCM get_config_value(const char *key);
 SCM get_config_value_and_eval(const char *key);

@@ -13,7 +13,7 @@
 
 //static SCM config_module = SCM_UNDEFINED;
 
-error_t find_root_dir(char **out_buf) {
+err_t find_root_dir(char **out_buf) {
     char buf[1024];
     char filebuf[1200]; // some extra to add to the path
     struct stat stats;
@@ -48,7 +48,7 @@ error_t find_root_dir(char **out_buf) {
     }
 }
 
-error_t load_config(SCM *module) {
+err_t load_config(SCM *module) {
     char *root_dir;
     ERRT(find_root_dir(&root_dir));
     char *file_path = calloc(strlen(root_dir) + sizeof("/config.scm"), sizeof(char)); // sizeof string includes \0
