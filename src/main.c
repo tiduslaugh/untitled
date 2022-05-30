@@ -29,36 +29,13 @@ void load_prelude() {
              scm_current_module());
 }
 
-scm_t_port_type *logging_type;
-
-size_t log_read(SCM port, SCM dst, size_t something, size_t something_else) {
-}
-
-size_t log_write(SCM port, SCM src, size_t start, size_t count) {
-    scm_t_bits level = SCM_STREAM(port);
-    log_log((int)level, __FILE__, __LINE__, "%s", SCM_BYTEVECTOR_CONTENTS(src));
-}
-
-int log_print(SCM port, SCM dest, scm_print_state *state) {
-    scm_t_bits level = SCM_STREAM(port);
-    scm_simple_format(dest,
-                      scm_from_utf8_string("#<logging: level ~S>   "),
-                      scm_list_1(scm_from_int((int)level)));
-    return 1;
-}
-
-void setup_logging_ports() {
-    // Create a new port type that uses our logger
-    logging_type = scm_make_port_type("logging-type",
-                                      log_read,
-                                      log_write);
-    scm_set_port_print(logging_type, log_print);
-    SCM error_port = scm_c_make_port(logging_type, SCM_WRTNG, LOG_ERROR);
-    scm_set_current_error_port(error_port);
-    SCM warning_port = scm_c_make_port(logging_type, SCM_WRTNG, LOG_WARN);
-    scm_set_current_warning_port(warning_port);
-    SCM output_port = scm_c_make_port(logging_type, SCM_WRTNG, LOG_INFO);
-    scm_set_current_output_port(output_port);
+void load_main() {
+    log_debug("Loading main...");
+    scm_c_primitive_load_path("lib/main.scm");
+    log_debug("Done.");
+    log_debug("Starting main...");
+    scm_c_eval_string("(call-main-protected main-loop)");
+    log_debug("Finished main.");
 }
 
 void init_curses() {
@@ -87,20 +64,13 @@ void setup_logging() {
 }
 
 void guile_main(void *unused, int argc, char **argv) {
-    setup_logging_ports();
     load_config();
     setup_logging();
     register_functions();
     load_prelude();
 
     init_curses();
-
-    while (true) {
-        int ch = getch();
-        if (ch == 'q') {
-            break;
-        }
-    }
+    load_main();
 
     wrapup();
 }

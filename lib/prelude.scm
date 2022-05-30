@@ -7,7 +7,8 @@
 ;;)
 (use-modules ((config) #:prefix config:) ((ice-9 readline))
              ((system repl server))
-             ((system repl coop-server)))
+             ((system repl coop-server))
+             ((srfi srfi-18)))
 
 (activate-readline)
 ;; Running top level repl server code in a module is no bueno, apparently...
@@ -56,6 +57,10 @@
                   (lambda () (simple-format (current-output-port) fmt arg ...))))))
 (clog 'error "Just a lil test...~S" 5)
 
+(define (clog-exception-handler exc)
+    (begin
+        (display "We messed up")
+        (clog 'error "Caught scheme exception: ~S" exc)))
 
-(display (current-error-port)) (newline)
-(raise-exception 'foo #:continuable? #t )
+(define (call-main-protected main)
+    (with-exception-handler clog-exception-handler main))
