@@ -5,6 +5,6 @@
 #ifndef UNTITLED_SRC_PRIMITIVES_H_
 #define UNTITLED_SRC_PRIMITIVES_H_
 
-void register_functions();
+void register_functions(void *unused);
 
 #endif //UNTITLED_SRC_PRIMITIVES_H_

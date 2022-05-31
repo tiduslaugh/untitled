@@ -1,4 +1,7 @@
-(define-module (lib clog))
+(define-module (lib clog)
+    #:use-module (ice-9 format)
+    #:use-module (c-bindings)
+    )
 
 (define (symbol/string->string val)
   (if (symbol? val)
@@ -16,15 +19,27 @@
                 (with-output-to-string 
                   (lambda () (simple-format (current-output-port) fmt arg ...))))))
 
-(define (make-logging-port level)
-  (let ((buf ""))
-    (make-soft-port
-      (vector
-        (lambda (c) (set! buf (string-append buf (string c)))) ;;putch
-	(lambda (s) (set! buf (string-append buf s))) ;;putstr
-	(lambda () (begin (clog level "~S" buf) (set! buf "")))
-	#f
-	(lambda () (set! buf ""))
-	"w"))))
 
-(export clog make-logging-port)
+;; Note: the below doesn't work and I'm not sure why. Just use the clog macro for now
+
+;; (define (make-logging-port level)
+;;   (let ((buf ""))
+;;     (make-soft-port
+;;       (vector
+;;         (lambda (c) (set! buf (string-append buf (string c)))) ;;putch
+;; 	    (lambda (s) (set! buf (string-append buf s))) ;;putstr
+;; 	    (lambda () (display (simple-format #f "buf is ~A" buf)) (clog level "~A" buf) (set! buf "")) ;;flush
+;; 	    #f ;; getch
+;; 	    (lambda () (set! buf "")) ;;close
+;;       )
+;; 	"w")))
+;; 
+;; (define-syntax-rule (logging-port-template level)
+;;     (primitive-eval 
+;;       `(define-public 
+;;          ,(string->symbol (format #f "log-~A-port" level)) 
+;;          (make-logging-port (quote level)))))
+;; 
+;; (map (lambda (sev) (logging-port-template sev)) severities)
+
+(export clog)

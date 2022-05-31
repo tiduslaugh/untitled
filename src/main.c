@@ -73,10 +73,11 @@ void setup_logging() {
 void guile_main(void *unused, int argc, char **argv) {
     load_config();
     setup_logging();
-    register_functions();
+    scm_c_define_module("c-bindings", register_functions, NULL);
+    //register_functions();
     load_prelude();
 
-    init_curses();
+    //init_curses();
     load_main();
 
     wrapup();

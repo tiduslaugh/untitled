@@ -47,6 +47,7 @@ static SCM guile_log_level(SCM s_level, SCM s_file, SCM s_line, SCM s_formatted)
     return SCM_UNSPECIFIED;
 }
 
-void register_functions() {
+void register_functions(void *unused) {
     scm_c_define_gsubr("log-level", 4, 0, 0, guile_log_level);
+    scm_c_export("log-level", NULL);
 }

@@ -8,7 +8,9 @@
 (use-modules ((config) #:prefix config:) ;; ((ice-9 readline))
              ((system repl server))
              ((system repl coop-server))
-             ((srfi srfi-18)))
+             ((srfi srfi-18))
+             ((c-bindings))
+             ((lib clog)))
 
 ;; (activate-readline)
 ;; Running top level repl server code in a module is no bueno, apparently...
@@ -40,14 +42,6 @@
     ((use-prefixed-module module-list)
      (primitive-eval `(use-modules (,'module-list #:prefix ,(generate-prefix 'module-list)))))))
 (export use-prefixed-module)
-
-(use-modules ((lib clog)))
-(module-add! 
-  (resolve-module '(lib clog))
-  'log-level 
-  (module-variable (current-module) 'log-level))
-
-(clog 'error "Just a lil test...~S" 5)
 
 (define (clog-exception-handler exc)
     (begin
