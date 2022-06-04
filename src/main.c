@@ -76,7 +76,7 @@ void guile_main(void *unused, int argc, char **argv) {
     scm_c_define_module("c-bindings", register_functions, NULL);
     load_prelude();
 
-    //init_curses();
+    init_curses();
     load_main();
 
     wrapup();
