@@ -9,8 +9,7 @@
              ((system repl server))
              ((system repl coop-server))
              ((srfi srfi-18))
-             ((c-bindings))
-             ((lib clog)))
+             ((lib clog) #:prefix lib/clog:))
 
 ;; (activate-readline)
 ;; Running top level repl server code in a module is no bueno, apparently...
@@ -18,22 +17,11 @@
     (if config:launch-debug-server
         (spawn-server (make-tcp-server-socket #:port config:debug-server-port))))
 
-;; eg (interleave (list 1 2 3) "and") -> (list 1 "and" 2 "and" 3)
-(define (interleave lst sep)
-  (if (nil? lst)
-    '()
-    (letrec ((interleave-internal 
-             (lambda (in sep out)
-               (if (null? (cdr in))
-                 (reverse (cons (car in) out))
-                 (interleave-internal (cdr in) sep (cons sep (cons (car in) out)))))))
-      (interleave-internal lst sep '()))))
-
 ;; eg (generate-prefix '(lib fancy-pants)) -> 'lib--fancy-pants:
 (define (generate-prefix module-list)
     (string->symbol
       (string-append
-        (string-join (map symbol->string module-list) "--")
+        (string-join (map symbol->string module-list) "/")
         ":"
       )))
 
@@ -43,10 +31,12 @@
      (primitive-eval `(use-modules (,'module-list #:prefix ,(generate-prefix 'module-list)))))))
 (export use-prefixed-module)
 
+(lib/clog:clog 'debug "Hi y'all!")
+
 (define (clog-exception-handler exc)
     (begin
         (display "We messed up")
-        (clog 'error "Caught scheme exception: ~S" exc)))
+        (lib/clog:clog 'error "Caught scheme exception: ~S" exc)))
 
 (define (call-main-protected main)
     (with-exception-handler clog-exception-handler main))

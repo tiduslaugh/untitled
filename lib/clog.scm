@@ -11,14 +11,26 @@
 (define severities '(trace debug info warning error fatal))
 ;; Use our c based logging to log a message
 ;; e.g. (clog 'error "We screwed up this bad: ~S" 5)
-(define-syntax-rule (clog level fmt arg ...)
- (let ((loc (current-source-location)))
-     (log-level level 
-                (assq-ref loc 'filename)
-                (symbol/string->string (assq-ref loc 'line))
-                (with-output-to-string 
-                  (lambda () (simple-format (current-output-port) fmt arg ...))))))
-
+(define-syntax clog
+  (lambda (x)
+    (syntax-case x (quote)
+     ((clog (quote level) fmt arg ...) 
+      (memq (syntax->datum #'level) severities)
+      (let ((loc (syntax-source x)))
+        #`(log-level
+          (quote level)
+          #,(assq-ref loc 'filename)
+          #,(symbol/string->string (assq-ref loc 'line))
+          (with-output-to-string 
+            (lambda () 
+              (simple-format (current-output-port) fmt arg ...)))))))))
+;; (define-syntax-rule (clog level fmt arg ...)
+;;  (let ((loc (current-source-location)))
+;;      (log-level level 
+;;                 (assq-ref loc 'filename)
+;;                 (symbol/string->string (assq-ref loc 'line))
+;;                 (with-output-to-string 
+;;                   (lambda () (simple-format (current-output-port) fmt arg ...))))))
 
 ;; Note: the below doesn't work and I'm not sure why. Just use the clog macro for now
 
