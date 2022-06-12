@@ -52,26 +52,20 @@ static SCM guile_getch() {
     // Returns: Multivalues, first is "was it a ctrl character" and second is either a char if in
     // ascii range or integer in high page range
     int input = getch();
-    bool ctrl = 0;
+    bool ctrl = false;
+    SCM output = scm_from_int(input);
     if (input >= 1 && input < 32) {
         // One of the ASCII control characters, but we care about it as a control sequence, eg
         // 0x01 = start of record = ^A = ctrl+a
         // 0x02 = record separator = ^B = ctrl+b and so on
-        ctrl = 1;
-        return scm_values(scm_list_2(
-            SCM_BOOL_T,
-            scm_integer_to_char(scm_from_int('a' + (input - 1)))
-        ));
+        ctrl = true;
+        output = scm_integer_to_char(scm_from_int('a' + (input - 1)));
     } else if (input < 128) {
         // ASCII, non-control. Covers 0 and [32, 128)
-        return scm_values(scm_list_2(
-            SCM_BOOL_F,
-            scm_integer_to_char(scm_from_int(input))
-        ));
+        ctrl = false;
+        output = scm_integer_to_char(scm_from_int(input));
     }
-
-    // TODO nice symbols for keypad keys
-    return scm_values(scm_list_2(SCM_BOOL_F, scm_from_int(input)));
+    return scm_values(scm_list_2(SCM_BOOL(ctrl), output));
 }
 
 void register_functions(void *unused) {
