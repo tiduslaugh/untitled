@@ -24,13 +24,9 @@
           (with-output-to-string 
             (lambda () 
               (simple-format (current-output-port) fmt arg ...)))))))))
-;; (define-syntax-rule (clog level fmt arg ...)
-;;  (let ((loc (current-source-location)))
-;;      (log-level level 
-;;                 (assq-ref loc 'filename)
-;;                 (symbol/string->string (assq-ref loc 'line))
-;;                 (with-output-to-string 
-;;                   (lambda () (simple-format (current-output-port) fmt arg ...))))))
+
+(define (clog-exception-handler exc)
+    (clog 'error "Caught scheme exception: ~S" exc))
 
 ;; Note: the below doesn't work and I'm not sure why. Just use the clog macro for now
 
@@ -54,4 +50,4 @@
 ;; 
 ;; (map (lambda (sev) (logging-port-template sev)) severities)
 
-(export clog)
+(export clog clog-exception-handler)

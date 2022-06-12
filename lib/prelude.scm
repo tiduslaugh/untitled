@@ -1,10 +1,6 @@
 ;; Contains code that gets executed immediately after functions are registered but before
 ;; the display is initialized.
-;;(define-module (lib prelude)
-;;    #:use-module ((config) #:prefix config:)
-;;    #:use-module ((system repl server))
-;;    #:use-module ((system repl coop-server))
-;;)
+(define-module (lib prelude))
 (use-modules ((config) #:prefix config:) ;; ((ice-9 readline))
              ((system repl server))
              ((system repl coop-server))
@@ -31,12 +27,5 @@
      (primitive-eval `(use-modules (,'module-list #:prefix ,(generate-prefix 'module-list)))))))
 (export use-prefixed-module)
 
-(lib/clog:clog 'debug "Hi y'all!")
-
-(define (clog-exception-handler exc)
-    (begin
-        (display "We messed up")
-        (lib/clog:clog 'error "Caught scheme exception: ~S" exc)))
-
-(define (call-main-protected main)
-    (with-exception-handler clog-exception-handler main))
+(define-public (call-main-protected main)
+    (with-exception-handler lib/clog:clog-exception-handler main #:unwind? #t))

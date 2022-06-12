@@ -9,11 +9,6 @@
 #include "log.h"
 #include "primitives.h"
 
-void guile_debug_value(SCM val) {
-    char *representation = scm_to_locale_string(scm_object_to_string(val, SCM_UNDEFINED));
-    log_debug("scheme object is %s\n", representation);
-    free(representation);
-}
 
 void wrapup() {
     // do all closing up shop in here
@@ -31,25 +26,15 @@ void load_prelude() {
 
 void load_main() {
     log_debug("Loading main...");
-    //scm_c_primitive_load_path("lib/main.scm");
+    scm_c_primitive_load_path("lib/main.scm");
     log_debug("Done.");
-
-    while (1) {
-        int input = getch();
-        if (input == 'q') {
-            break;
-        }
-    }
-//    log_debug("Starting main...");
-//    scm_c_eval_string("(call-main-protected main-loop)");
-//    log_debug("Finished main.");
 }
 
 void init_curses() {
     log_set_quiet(true);
     initscr();
     cbreak();
-    echo();
+    noecho();
     intrflush(stdscr, false);
     keypad(stdscr, true);
 }

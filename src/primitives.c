@@ -4,6 +4,7 @@
 
 #include "primitives.h"
 #include <libguile.h>
+#include <curses.h>
 #include "log.h"
 
 static struct { const char *symbol; int value; } lookup[] = {
@@ -20,7 +21,6 @@ static int log_level_symbol_to_int(SCM symbol) {
         if (scm_is_true(scm_eq_p(
             scm_from_utf8_symbol(lookup[i].symbol),
             symbol))) {
-            log_info("Found match %s", lookup[i].symbol);
             return lookup[i].value;
         }
     }
@@ -47,7 +47,35 @@ static SCM guile_log_level(SCM s_level, SCM s_file, SCM s_line, SCM s_formatted)
     return SCM_UNSPECIFIED;
 }
 
+static SCM guile_getch() {
+    // Procedure (getch)
+    // Returns: Multivalues, first is "was it a ctrl character" and second is either a char if in
+    // ascii range or integer in high page range
+    int input = getch();
+    bool ctrl = 0;
+    if (input >= 1 && input < 32) {
+        // One of the ASCII control characters, but we care about it as a control sequence, eg
+        // 0x01 = start of record = ^A = ctrl+a
+        // 0x02 = record separator = ^B = ctrl+b and so on
+        ctrl = 1;
+        return scm_values(scm_list_2(
+            SCM_BOOL_T,
+            scm_integer_to_char(scm_from_int('a' + (input - 1)))
+        ));
+    } else if (input < 128) {
+        // ASCII, non-control. Covers 0 and [32, 128)
+        return scm_values(scm_list_2(
+            SCM_BOOL_F,
+            scm_integer_to_char(scm_from_int(input))
+        ));
+    }
+
+    // TODO nice symbols for keypad keys
+    return scm_values(scm_list_2(SCM_BOOL_F, scm_from_int(input)));
+}
+
 void register_functions(void *unused) {
     scm_c_define_gsubr("log-level", 4, 0, 0, guile_log_level);
-    scm_c_export("log-level", NULL);
+    scm_c_define_gsubr("getch", 0, 0, 0, guile_getch);
+    scm_c_export("log-level", "getch", NULL);
 }

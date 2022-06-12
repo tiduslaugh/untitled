@@ -18,6 +18,6 @@ if (NOT GUILE_INCLUDE)
     message(FATAL_ERROR "guile_include not set")
 endif ()
 
-add_executable(untitled src/main.c src/error_handling.h src/log.c src/log.h src/config.c src/config.h src/error_handling.c src/primitives.c src/primitives.h)
+add_executable(untitled src/main.c src/error_handling.h src/log.c src/log.h src/config.c src/config.h src/error_handling.c src/primitives.c src/primitives.h src/util.c src/util.h)
 target_link_libraries(untitled "${GUILE_LIB}" "${CURSES_LIBRARIES}")
 target_include_directories(untitled PUBLIC "${GUILE_INCLUDE}" "${CURSES_INCLUDE_DIRS}")
