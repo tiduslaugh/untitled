@@ -68,8 +68,19 @@ static SCM guile_getch() {
     return scm_values(scm_list_2(SCM_BOOL(ctrl), output));
 }
 
+static SCM guile_mvaddch(SCM y, SCM x, SCM chr) {
+    int raw_y = scm_to_int(y), raw_x = scm_to_int(x);
+    char raw_chr = scm_to_char(scm_char_to_integer(chr));
+    int result = mvaddch(raw_y, raw_x, raw_chr);
+    if(result == ERR) {
+        return scm_from_utf8_symbol("curses-error");
+    }
+    return SCM_UNDEFINED;
+}
+
 void register_functions(void *unused) {
     scm_c_define_gsubr("log-level", 4, 0, 0, guile_log_level);
     scm_c_define_gsubr("getch", 0, 0, 0, guile_getch);
-    scm_c_export("log-level", "getch", NULL);
+    scm_c_define_gsubr("mvaddch", 3, 0, 0, guile_mvaddch);
+    scm_c_export("log-level", "getch", "mvaddch", NULL);
 }

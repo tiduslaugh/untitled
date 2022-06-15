@@ -7,9 +7,12 @@
 (define (main game return)
   (define-values (ctrl input-char) (getch))
   (lib/clog:clog 'info "~S ~S" ctrl input-char)
-  (if (and (eq? input-char #\q) ctrl)
-    (return #f))
-  (lib/clog:clog 'info "Char was ~S" input-char)
+  (mvaddch 0 0 #\0)
+  (cond
+    ((and (eq? input-char #\q) ctrl) (return #f))
+    ((and (char? input-char) (char>? #\40) (char<? #\177)) (mvaddch 0 0 input-char))
+    ((eq? input-char 'curses-error) (return input-char)))
+  (error "foo")
   (main game return))
 
 (define (main-wrap)
@@ -17,7 +20,4 @@
          (call/ec (lambda (return) (main '() return)))))
     (lib/clog:clog 'info "Return value was ~S" return-value)))
 
-(define (call-main-protected main)
-    (with-exception-handler lib/clog:clog-exception-handler main #:unwind? #t))
-
-(call-main-protected main-wrap)
+(lib/clog:call-main-protected main-wrap)

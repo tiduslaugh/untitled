@@ -1,18 +1,19 @@
 (define-module (lib clog)
+    #:use-module (ice-9 control)
+    #:use-module (ice-9 exceptions)
     #:use-module (ice-9 format)
-    #:use-module (c-bindings)
-    )
+    #:use-module (c-bindings))
 
-(define (symbol/string->string val)
-  (if (symbol? val)
-    (symbol->string val)
-    val))
 
-(define severities '(trace debug info warning error fatal))
 ;; Use our c based logging to log a message
 ;; e.g. (clog 'error "We screwed up this bad: ~S" 5)
 (define-syntax clog
   (lambda (x)
+    (define severities '(trace debug info warning error fatal))
+    (define (symbol/string->string val)
+      (if (symbol? val)
+        (symbol->string val)
+        val))
     (syntax-case x (quote)
      ((clog (quote level) fmt arg ...) 
       (memq (syntax->datum #'level) severities)
@@ -25,8 +26,20 @@
             (lambda () 
               (simple-format (current-output-port) fmt arg ...)))))))))
 
-(define (clog-exception-handler exc)
-    (clog 'error "Caught scheme exception: ~S" exc))
+(define (clog-exception-handler exc) 
+  (let*
+   ((stack (make-stack #t 1 3))
+    (bt
+      (with-output-to-string
+        (lambda ()
+          (display-backtrace stack (current-output-port)))))
+    (exception-str 
+      (string-trim-right 
+        (with-output-to-string 
+          (lambda () (print-exception (current-output-port) #f (exception-kind exc) (exception-args exc))))
+        char-set:whitespace)))
+   (clog 'error "~A" bt)
+   (clog 'error "~A" exception-str)))
 
 ;; Note: the below doesn't work and I'm not sure why. Just use the clog macro for now
 
@@ -50,4 +63,13 @@
 ;; 
 ;; (map (lambda (sev) (logging-port-template sev)) severities)
 
-(export clog clog-exception-handler)
+(define (call-main-protected main)
+  (let/ec cancel
+    (start-stack 'main
+     (with-exception-handler 
+       (lambda (exn)
+        (clog-exception-handler exn)
+        (cancel #f))
+       main))))
+
+(export clog clog-exception-handler call-main-protected)
