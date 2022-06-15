@@ -4,7 +4,6 @@
     #:use-module (ice-9 format)
     #:use-module (c-bindings))
 
-
 ;; Use our c based logging to log a message
 ;; e.g. (clog 'error "We screwed up this bad: ~S" 5)
 (define-syntax clog
@@ -26,18 +25,22 @@
             (lambda () 
               (simple-format (current-output-port) fmt arg ...)))))))))
 
+(define (get-backtrace-str stack)
+  (with-output-to-string
+    (lambda ()
+      (display-backtrace stack (current-output-port)))))
+
+(define (get-exception-str exc)
+  (string-trim-right 
+    (with-output-to-string 
+      (lambda () (print-exception (current-output-port) #f (exception-kind exc) (exception-args exc))))
+    char-set:whitespace))
+
 (define (clog-exception-handler exc) 
   (let*
-   ((stack (make-stack #t 1 3))
-    (bt
-      (with-output-to-string
-        (lambda ()
-          (display-backtrace stack (current-output-port)))))
-    (exception-str 
-      (string-trim-right 
-        (with-output-to-string 
-          (lambda () (print-exception (current-output-port) #f (exception-kind exc) (exception-args exc))))
-        char-set:whitespace)))
+   ((stack (make-stack #t 3))
+    (bt (get-backtrace-str stack))
+    (exception-str (get-exception-str exc)))
    (clog 'error "~A" bt)
    (clog 'error "~A" exception-str)))
 
@@ -64,12 +67,13 @@
 ;; (map (lambda (sev) (logging-port-template sev)) severities)
 
 (define (call-main-protected main)
-  (let/ec cancel
-    (start-stack 'main
-     (with-exception-handler 
-       (lambda (exn)
+  (let/ec 
+    cancel
+    (with-exception-handler 
+      (lambda (exn)
         (clog-exception-handler exn)
         (cancel #f))
-       main))))
+      (lambda ()
+        (start-stack 'main (main))))))
 
 (export clog clog-exception-handler call-main-protected)
