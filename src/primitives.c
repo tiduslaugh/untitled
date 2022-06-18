@@ -87,8 +87,20 @@ SCM_DEFINE_PUBLIC(guile_mvaddch, "mvaddch", 3, 0, 0,
     return SCM_BOOL_F;
 }
 
+SCM_DEFINE_PUBLIC(guile_mvaddstr, "mvaddstr", 3, 0, 0,
+                  (SCM y, SCM x, SCM str),
+                  "Move to position (row, column) then display a string.")
+{
+    int raw_y = scm_to_int(y), raw_x = scm_to_int(x);
+    char *raw_str = scm_to_locale_string(str);
+    int result = mvaddstr(raw_y, raw_x, raw_str);
+    free(raw_str);
+    if(result == ERR) {
+        return scm_from_utf8_symbol("curses-error");
+    }
+    return SCM_BOOL_F;
+}
+
 void register_functions(void *unused) {
-#ifndef SCM_MAGIC_SNARFER
 #include "primitives.x"
-#endif
 }

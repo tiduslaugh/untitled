@@ -13,19 +13,5 @@
     (if config:launch-debug-server
         (spawn-server (make-tcp-server-socket #:port config:debug-server-port))))
 
-;; eg (generate-prefix '(lib fancy-pants)) -> 'lib--fancy-pants:
-(define (generate-prefix module-list)
-    (string->symbol
-      (string-append
-        (string-join (map symbol->string module-list) "/")
-        ":"
-      )))
-
-(define-syntax use-prefixed-module
-  (syntax-rules ()
-    ((use-prefixed-module module-list)
-     (primitive-eval `(use-modules (,'module-list #:prefix ,(generate-prefix 'module-list)))))))
-(export use-prefixed-module)
-
 (define-public (call-main-protected main)
     (with-exception-handler lib/clog:clog-exception-handler main #:unwind? #t))
