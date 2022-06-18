@@ -27,7 +27,11 @@ static int log_level_symbol_to_int(SCM symbol) {
     return -1;
 }
 
-static SCM guile_log_level(SCM s_level, SCM s_file, SCM s_line, SCM s_formatted) {
+//static SCM guile_log_level(SCM s_level, SCM s_file, SCM s_line, SCM s_formatted) {
+SCM_DEFINE_PUBLIC (guile_log_level, "log-level", 4, 0, 0,
+            (SCM s_level, SCM s_file, SCM s_line, SCM s_formatted),
+            "Log at a specific level with clog.")
+{
     //int level = scm_to_int(s_level);
     int level = log_level_symbol_to_int(s_level);
     char *format_str = scm_to_locale_string(s_formatted);
@@ -47,9 +51,11 @@ static SCM guile_log_level(SCM s_level, SCM s_file, SCM s_line, SCM s_formatted)
     return SCM_UNSPECIFIED;
 }
 
-static SCM guile_getch() {
-    // Procedure (getch)
-    // Returns: Multivalues, first is "was it a ctrl character" and second is either a char if in
+SCM_DEFINE_PUBLIC (guile_getch, "getch", 0, 0, 0,
+                   (),
+                   "Get one character via curses. Returns multivalues, first is \"was it a ctrl character\" and second"
+                   "is either a char if in ascii range or an int if not.")
+{
     // ascii range or integer in high page range
     int input = getch();
     bool ctrl = false;
@@ -68,19 +74,21 @@ static SCM guile_getch() {
     return scm_values(scm_list_2(SCM_BOOL(ctrl), output));
 }
 
-static SCM guile_mvaddch(SCM y, SCM x, SCM chr) {
+SCM_DEFINE_PUBLIC(guile_mvaddch, "mvaddch", 3, 0, 0,
+                  (SCM y, SCM x, SCM chr),
+                  "Move to position (row, column) then display a single character.")
+{
     int raw_y = scm_to_int(y), raw_x = scm_to_int(x);
     char raw_chr = scm_to_char(scm_char_to_integer(chr));
     int result = mvaddch(raw_y, raw_x, raw_chr);
     if(result == ERR) {
         return scm_from_utf8_symbol("curses-error");
     }
-    return SCM_UNDEFINED;
+    return SCM_BOOL_F;
 }
 
 void register_functions(void *unused) {
-    scm_c_define_gsubr("log-level", 4, 0, 0, guile_log_level);
-    scm_c_define_gsubr("getch", 0, 0, 0, guile_getch);
-    scm_c_define_gsubr("mvaddch", 3, 0, 0, guile_mvaddch);
-    scm_c_export("log-level", "getch", "mvaddch", NULL);
+#ifndef SCM_MAGIC_SNARFER
+#include "primitives.x"
+#endif
 }

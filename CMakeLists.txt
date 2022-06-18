@@ -17,7 +17,22 @@ find_path(GUILE_INCLUDE libguile.h HINTS /usr/include/guile/3.0 /usr/include/gui
 if (NOT GUILE_INCLUDE)
     message(FATAL_ERROR "guile_include not set")
 endif ()
+find_program(GUILE_SNARF_PATH guile-snarf REQUIRED)
 
-add_executable(untitled src/main.c src/error_handling.h src/log.c src/log.h src/config.c src/config.h src/error_handling.c src/primitives.c src/primitives.h src/util.c src/util.h)
+add_custom_command(
+    OUTPUT src/primitives.x
+    COMMAND ${GUILE_SNARF_PATH} -o src/primitives.x src/primitives.c -I "${GUILE_INCLUDE}"
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    DEPENDS src/primitives.c
+    VERBATIM
+)
+add_custom_target(snarf
+    DEPENDS src/primitives.x
+)
+
+add_executable(untitled
+        src/primitives.c src/main.c src/error_handling.h src/log.c src/log.h src/config.c src/config.h src/error_handling.c
+        src/primitives.h src/util.c src/util.h)
+add_dependencies(untitled snarf)
 target_link_libraries(untitled "${GUILE_LIB}" "${CURSES_LIBRARIES}")
 target_include_directories(untitled PUBLIC "${GUILE_INCLUDE}" "${CURSES_INCLUDE_DIRS}")
